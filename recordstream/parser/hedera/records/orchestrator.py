@@ -5,6 +5,7 @@ import time
 
 import jsonlines
 import pendulum
+import ray
 
 from hedera.config import settings
 from hedera.errors import FileScanError, ParserLoopError
@@ -27,7 +28,7 @@ class RecordFileOrchestrator:
         self.logger = None
         self.__init_log__()
         self.parser = RcdParser()
-        self.chunk_size = 500
+        self.ray_chunk_size = 500
         self.txn_list_size = 5000
         try:
             self.writer = jsonlines.open(
@@ -41,6 +42,8 @@ class RecordFileOrchestrator:
         except Exception as ex:
             self.logger.exception(f"Error opening {settings.LOG_DIR + '/recordstreams' + '.json'}: {ex}")
             raise
+        
+        ray.init(_temp_dir=settings.RAY_TMP_DIR)
 
     def __init_log__(self):
         """
@@ -70,13 +73,13 @@ class RecordFileOrchestrator:
             if version == "v5":
                 v5_txns.extend(txns)
                 if len(v5_txns) > self.txn_list_size or f == files_to_parse[-1]:
-                    self.write_to_file(self.v5_parser(v5_txns, v5_chunked_list, self.chunk_size))
+                    self.write_to_file(self.ray_v5_parser(v5_txns, v5_chunked_list, self.ray_chunk_size))
                     v5_txns = []
                     v5_chunked_list = []
             if version == "v6":
                 v6_txns.extend(txns)
                 if len(v6_txns) > self.txn_list_size or f == files_to_parse[-1]:
-                    self.write_to_file(self.v6_parser(v6_txns, v6_chunked_list, self.chunk_size))
+                    self.write_to_file(self.ray_v6_parser(v6_txns, v6_chunked_list, self.ray_chunk_size))
                     v6_txns = []
                     v6_chunked_list = []
             files_to_parse.remove(f)
@@ -84,7 +87,7 @@ class RecordFileOrchestrator:
             end = time.time()
             self.logger.debug(f"Parsed {f} in {end-start} seconds.")
 
-    def v5_parser(self, v5_txns: list, v5_chunked_list: list, chunk_size: int) -> list:
+    def ray_v5_parser(self, v5_txns: list, v5_chunked_list: list, chunk_size: int) -> list:
         """
         Uses ray remote to parse v5 transactions
 
@@ -99,19 +102,21 @@ class RecordFileOrchestrator:
             v5_chunked_list.append(v5_txns[i : i + chunk_size])
 
         parsed_txns.extend(
-            [
-                parse_transaction_v5(
-                    chunk,
-                    pendulum.now("UTC").isoformat("T")[:26] + "Z",
-                    self.logger,
-                )
-                for chunk in v5_chunked_list
-            ]
+            ray.get(
+                [
+                    parse_transaction_v5.remote(
+                        chunk,
+                        pendulum.now("UTC").isoformat("T")[:26] + "Z",
+                        self.logger,
+                    )
+                    for chunk in v5_chunked_list
+                ]
+            )
         )
 
         return parsed_txns
 
-    def v6_parser(self, v6_txns: list, v6_chunked_list: list[list], chunk_size: int) -> list:
+    def ray_v6_parser(self, v6_txns: list, v6_chunked_list: list[list], chunk_size: int) -> list:
         """
         Uses ray remote to parse v6 transactions
 
@@ -126,14 +131,16 @@ class RecordFileOrchestrator:
             v6_chunked_list.append(v6_txns[i : i + chunk_size])
 
         parsed_txns.extend(
-            [
-                parse_transaction_v6(
-                    chunk,
-                    pendulum.now("UTC").isoformat("T")[:26] + "Z",
-                    self.logger,
-                )
-                for chunk in v6_chunked_list
-            ]
+            ray.get(
+                [
+                    parse_transaction_v6.remote(
+                        chunk,
+                        pendulum.now("UTC").isoformat("T")[:26] + "Z",
+                        self.logger,
+                    )
+                    for chunk in v6_chunked_list
+                ]
+            )
         )
 
         return parsed_txns

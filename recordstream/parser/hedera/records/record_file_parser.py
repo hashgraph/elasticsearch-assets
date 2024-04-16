@@ -6,6 +6,7 @@ import shutil
 from typing import Union
 
 import pendulum
+import ray
 from pydantic.error_wrappers import ValidationError
 
 from hedera.config import settings
@@ -86,6 +87,7 @@ from hedera.util.protobuf_to_dict import protobuf_to_dict
 from hedera.util.utilities import dict_bytes_to_hex
 
 
+@ray.remote
 def parse_transaction_v5(chunk: list, timestamp: str, logger: logging.Logger) -> dict:
     """
     Methods to parse transactions (ray method)
@@ -149,6 +151,7 @@ def parse_transaction_v5(chunk: list, timestamp: str, logger: logging.Logger) ->
     return parsed_txns
 
 
+@ray.remote
 def parse_transaction_v6(chunk: list, timestamp: str, logger: logging.Logger) -> dict:
     """
     Methods to parse transactions (ray method)
