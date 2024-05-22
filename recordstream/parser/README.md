@@ -24,12 +24,12 @@ To run the Hedera repository locally, you can do the following
 ## Backfilling Missing Data
 In the case that there was a bug in a parser or any downtime, we may need to backfill data we missed during an outage. All of the Hedera ledger ingestion services have a "backfill" mode that can be used to do so. Below is a guide on how to do so (please note backfilling will likely need to be done in dedicated VM that is connected to Elasticsearch; the SRE team can help set this up if needed)
 1. Download the files from the timeframe where no (or erroneous) data was collected
-- `poetry run python hedera/cli.py <downloader> --backfill-marker "<pattern>"`
+- `poetry run python hedera/cli.pyrecord-file-downloader --backfill-marker "<pattern>"`
 - The `<downloader>` parameter can be any of the downloaders listed above in the Local Environment section
 - The `marker` parameter reflects the location/filenames (time-based) to collect from the google bucket. Hedera's files use the following format `YYYY-MM-DDTHH_mm_ss`
 - Make sure the downloader is trying to get data from an online node, otherwise the marker will be reset
 2. Parse the files from the timeframe where no (or erroneous) data was collected
-- `poetry run python hedera/cli.py <orchestrator> --backfill-marker "<pattern>"`
+- `poetry run python hedera/cli.py record-file-orchestrator --backfill-marker "<pattern>"`
 - The `<orchestrator>` parameter can be any of the orchestrators listed above in the Local Environment section
 - The `marker` parameter reflects the local location the files have been downloaded to. Please use the following format `YYYY-MM-DD`
 3. Validate data has been shipped to Elasticsearch

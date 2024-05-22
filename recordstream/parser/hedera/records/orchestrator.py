@@ -173,7 +173,7 @@ class RecordFileOrchestrator:
 
                 try:
                     files_to_parse = scan_for_new_files(
-                        f"{settings.PARSED_RECORD_BALANCE_FILES_PATH}{year}/{month}/{day}/",
+                        f"{settings.PARSED_RECORD_STREAM_FILES_PATH}{year}/{month}/{day}/",
                         "rcd",
                     )
                     files_to_parse.sort()
@@ -181,7 +181,7 @@ class RecordFileOrchestrator:
 
                     batch_start = time.time()
 
-                    self.parse_txns(files_to_parse, f"{settings.PARSED_RECORD_BALANCE_FILES_PATH}{year}/{month}/{day}/")
+                    self.parse_txns(files_to_parse, f"{settings.PARSED_RECORD_STREAM_FILES_PATH}{year}/{month}/{day}/")
 
                     batch_end = time.time()
                     self.logger.info(f"Batch processed in {batch_end-batch_start} seconds.")

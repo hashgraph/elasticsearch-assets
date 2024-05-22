@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     RECORDS_FILES_PATH: str = os.getenv("RECORDS_FILES_PATH")
     PARSED_RECORD_STREAM_FILES_DIR: str = os.getenv("PARSED_RECORD_STREAM_FILES_DIR")
-    PARSED_RECORD_BALANCE_FILES_PATH: str = os.getenv("PARSED_RECORD_BALANCE_FILES_PATH")
+    PARSED_RECORD_STREAM_FILES_PATH: str = os.getenv("PARSED_RECORD_STREAM_FILES_PATH")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL")
 
     # Ray tmp directory for session data
