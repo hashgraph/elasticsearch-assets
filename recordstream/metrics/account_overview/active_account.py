@@ -122,7 +122,10 @@ class NetworkOverview:
         simplified_records = []
         for record in records:
             if record['transfer_list'] is None:
-                continue
+                simplified_records.append({
+                    'consensusTimestamp': record['consensusTimestamp'],
+                    'accountNum': record["payer"]
+                })
             for transfer in record['transfer_list']:
                 simplified_records.append({
                     'consensusTimestamp': record['consensusTimestamp'],
