@@ -32,7 +32,7 @@ class RecordFileOrchestrator:
         self.txn_list_size = 5000
         try:
             self.writer = jsonlines.open(
-                settings.LOG_DIR + "/recordstreams" + ".json",
+                settings.PARSER_OUTPUT_DIR + "/recordstreams" + ".json",
                 mode="a",
                 flush=True,
             )

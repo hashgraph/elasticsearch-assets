@@ -8,6 +8,7 @@ __pycache__
 *.log
 *.out
 logs/
+outputs/
 recordstreams-processed-list.txt
 .coverage*
 MirrorNodeData/

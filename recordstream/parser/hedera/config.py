@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     HEDERA_APP_CONFIG_PATH: str = os.getenv("HEDERA_APP_CONFIG_PATH")
     HEDERA_DEV_ENV: bool = os.getenv("HEDERA_DEV_ENV", "True")
     LOG_DIR: str = os.getenv("LOG_DIR")
+    PARSER_OUTPUT_DIR: str = os.getenv("PARSER_OUTPUT_DIR")
     GOOGLE_APP_CREDENTIALS: str = os.getenv("GOOGLE_APP_CREDENTIALS")
     MIRROR_NODE_URL: str = os.getenv("MIRROR_NODE_URL")
 
