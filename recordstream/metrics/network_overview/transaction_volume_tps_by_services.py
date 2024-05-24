@@ -135,6 +135,8 @@ class NetworkOverview:
 
     def aggregate_recordstreams_overall(self, records_df):
         # Aggregate record streams DataFrame
+        # Filter out status != 22
+        records_df = records_df[records_df['status'] == '22']
         # Get the total number of transactions by transaction type per minute
         group_txn = records_df.groupby('rounded_timestamp').apply(
             lambda x: pd.Series({
@@ -156,13 +158,14 @@ class NetworkOverview:
         network_overview['data_type'] = 'overall'
         return network_overview
 
-    def write_to_json(self, output_df):
+    def write_to_json(self, output_name, output_df):
         # Write output to JSON file
-        output_df.to_json(f"{self.options.output_folder}/{self.script_name}.json", orient='records', lines=True)
+        output_df.to_json(output_name, orient='records', lines=True)
 
     def run(self):
         self.logger.info("Run method started ...")
         try:
+            self.logger.info(f"Reading data from {self.options.input_file}...")
             records = self.read_data(self.options.input_file)
             records_df = self.rcdstreams_to_pd_df(records)
             cleaned_records = self.clean_records_df(records_df)
@@ -170,7 +173,9 @@ class NetworkOverview:
             aggregated_records_overall = self.aggregate_recordstreams_overall(cleaned_records)
             # merge the two dataframes
             aggregated_records = pd.concat([aggregated_records_txn, aggregated_records_overall])
-            self.write_to_json(aggregated_records)
+            output_filename = f"{self.options.output_folder}/{self.script_name}.json"
+            self.logger.info(f"Writing aggregated output to {output_filename} ...")
+            self.write_to_json(output_filename, aggregated_records)
             self.logger.info("Total runtime: %s" % str(datetime.datetime.now() - self.starttime))
         except Exception as e:
             self.logger.exception("Fatal Error!")

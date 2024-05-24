@@ -123,22 +123,27 @@ class NetworkOverview:
 
     def aggregate_recordstreams(self, records_df):
         # Aggregate record streams DataFrame
+        # Filter out status != 22
+        records_df = records_df[records_df['status'] == '22']
         # Get the total number of transactions by transaction type per minute
         network_overview = records_df.groupby(['rounded_timestamp', 'node_id'])['transaction_hash'].count().reset_index()
         return network_overview
 
-    def write_to_json(self, output_df):
+    def write_to_json(self, output_name, output_df):
         # Write output to JSON file
-        output_df.to_json(f"{self.options.output_folder}/{self.script_name}.json", orient='records', lines=True)
+        output_df.to_json(output_name, orient='records', lines=True)
 
     def run(self):
         self.logger.info("Run method started ...")
         try:
+            self.logger.info(f"Reading data from {self.options.input_file}...")
             records = self.read_data(self.options.input_file)
             records_df = self.rcdstreams_to_pd_df(records)
             cleaned_records = self.clean_records_df(records_df)
             aggregated_records = self.aggregate_recordstreams(cleaned_records)
-            self.write_to_json(aggregated_records)
+            output_name = f"{self.options.output_folder}/{self.script_name}.json"
+            self.logger.info(f"Writing output to {output_name}...")
+            self.write_to_json(output_name, aggregated_records)
             self.logger.info("Total runtime: %s" % str(datetime.datetime.now() - self.starttime))
         except Exception as e:
             self.logger.exception("Fatal Error!")
