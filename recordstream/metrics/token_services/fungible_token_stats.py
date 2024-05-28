@@ -256,7 +256,7 @@ class HTS:
             self.write_df_to_file(output_filename_type, aggregate_recordstreams_by_type)
             output_filename_topics = f"{self.options.output_folder}/{self.script_name}_by_token"
             self.logger.info(f"Writing aggregated output to {output_filename_topics} ...")
-            self.write_df_to_file(output_filename_topics, output_filename_type)
+            self.write_df_to_file(output_filename_topics, aggregate_recordstreams_by_token)
             self.logger.info("Run method completed ...")
         except Exception as e:
             self.logger.exception("Fatal Error!")
