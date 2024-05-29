@@ -29,7 +29,7 @@ class Transfer(BaseModel):
 
 class TokenTransferList(BaseModel):
     token: Token
-    transfers: list[Transfer]
+    transfers: list[Transfer] | None = None
 
 
 class Txn(BaseModel):
@@ -168,11 +168,14 @@ class HTS:
                         # overwrite internal_token_number when token_number is present
                         flat_records['internal_token_number'] = token['token']['tokenNum']
                         # list sender/receiver
+                        if token['transfers'] is None:
+                            continue
+                        print("token['transfers']", token['transfers'])
                         flat_records['sender'] = [transfer['accountID']['accountNum'] for transfer in token['transfers']  if transfer['amount'] < 0]
                         flat_records['receiver'] = [transfer['accountID']['accountNum'] for transfer in token['transfers'] if transfer['amount'] >= 0]
                         # token burn/mint/transfer amount
-                        flat_records['send_amount'] = sum([transfer['amount'] for token in token_list for transfer in token['transfers'] if transfer['amount'] < 0])
-                        flat_records['receive_amount'] = sum([transfer['amount'] for token in token_list for transfer in token['transfers'] if transfer['amount'] >= 0])
+                        flat_records['send_amount'] = sum([transfer['amount'] for transfer in token['transfers'] if transfer['amount'] < 0])
+                        flat_records['receive_amount'] = sum([transfer['amount'] for transfer in token['transfers'] if transfer['amount'] >= 0])
 
                         simplified_records.append(flat_records)
         return simplified_records
