@@ -22,6 +22,7 @@ class Txn(BaseModel):
     status: str
     transaction_hash: str = Field(alias="record.transactionHash")
     txn_type: str
+    txn_sign_keys: list[str] | None = None
     processed_timestamp:  datetime.datetime = Field(alias="@processed")
     consensusTimestamp: datetime.datetime
     payer: str = Field(alias="record.accountID.accountNum")
@@ -63,6 +64,14 @@ class NetworkOverview:
             dest="output_folder",
             help="Path to the output folder")
 
+        parser.add_option(
+            "-f", "--output_format",
+            default='json',
+            action='store',
+            type=str,
+            dest='output_format',
+            help='Output format [json|csv]')
+        
         parser.add_option(
             "-l", "--level", 
             default="INFO",
@@ -129,8 +138,27 @@ class NetworkOverview:
             for transfer in record['transfer_list']:
                 simplified_records.append({
                     'consensusTimestamp': record['consensusTimestamp'],
-                    'accountNum': transfer['accountID']['accountNum']
+                    'key_type': record["txn_sign_keys"]
                 })
+        return simplified_records
+
+    def transform_data_payer_ec_key(self, records):
+        # Extract only timestamp and unnested accountNum from the transfer_list column
+        simplified_records = []
+        for record in records:
+            if record['transfer_list'] is None:
+                simplified_records.append({
+                    'consensusTimestamp': record['consensusTimestamp'],
+                    'accountNum': record["payer"],
+                    'key_type': record["txn_sign_keys"]
+                })
+            for transfer in record['transfer_list']:
+                if transfer['accountID']['accountNum'] < 0:
+                    simplified_records.append({
+                        'consensusTimestamp': record['consensusTimestamp'],
+                        'key_type': record["txn_sign_keys"],
+                        'accountNum': transfer['accountID']['accountNum']
+                    })
         return simplified_records
 
     def rcdstreams_to_pd_df(self, records):
@@ -157,10 +185,26 @@ class NetworkOverview:
         # extract unique accountNums
         unique_account = records_df['accountNum'].unique()
         return unique_account
+    
+    def aggregated_recordstreams_payer_ec_key(self, records_df):
+        # Aggregate record streams DataFrame
+        # Count distinct accountNums per minute
+        active_account = records_df.groupby(['key_type']).agg(
+            transaction_count=pd.NamedAgg(column="transaction_hash", aggfunc="count"),
+            account_count=pd.NamedAgg(column="accountNum", aggfunc="nunique")
+        ).reset_index()
+        return active_account
 
-    def write_to_json(self, output_filename, output_df):
-        # Write output to JSON file
-        output_df.to_json(output_filename, orient='records', lines=True)
+    def write_df_to_file(self, output_filename, output_df):
+        output_filename = f"{output_filename}_{self.starttime.strftime('%Y%m%d%H%M%S')}.{self.options.output_format}"
+        if self.options.output_format == 'json':    
+            # Write output to JSON file
+            output_df.to_json(output_filename, orient='records', lines=True)
+        elif self.options.output_format == 'csv':
+            # Write output to CSV file
+            output_df.to_csv(output_filename, index=False)
+        else:
+            raise Exception("Invalid output format")
 
     def run(self):
         self.logger.info("Run method started ...")
@@ -172,9 +216,17 @@ class NetworkOverview:
             cleaned_records = self.clean_records_df(records_df)
             # Count unique number of account per minute
             aggregated_records = self.aggregate_recordstreams(cleaned_records)
-            output_filename = f"{self.options.output_folder}/{self.script_name}.json"
+            output_filename = f"{self.options.output_folder}/{self.script_name}_active_account"
             self.logger.info(f"Writing aggregated output to {output_filename} ...")
-            self.write_to_json(output_filename, aggregated_records)
+            self.write_df_to_file(output_filename, aggregated_records)
+            # Aggegate EC account
+            simplified_records_payer_ec_key = self.transform_data_payer_ec_key(records)
+            records_df_payer_ec_key = self.rcdstreams_to_pd_df(simplified_records_payer_ec_key)
+            cleaned_records_payer_ec_key = self.clean_records_df(records_df_payer_ec_key)
+            aggregated_records_payer_ec_key = self.aggregated_recordstreams_payer_ec_key(cleaned_records_payer_ec_key)
+            output_filename = f"{self.options.output_folder}/{self.script_name}_ec_account"
+            self.logger.info(f"Writing aggregated output to {output_filename} ...")
+            self.write_df_to_file(output_filename, aggregated_records_payer_ec_key)
             # Get list of unique accountNums in the records
             unique_account = self.unique_account(cleaned_records)
             output_filename = f"{self.options.output_folder}/unique_active_accounts.json"
