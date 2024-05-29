@@ -30,6 +30,7 @@ class Transfer(BaseModel):
 class TokenTransferList(BaseModel):
     token: Token
     transfers: list[Transfer] | None = None
+    nftTransfers: list | None = None
 
 
 class Txn(BaseModel):
@@ -165,12 +166,15 @@ class HTS:
 
                     # list of token sender/receiver
                     for token in token_list:
+                        # filter out nft token
+                        if token['nftTransfers'] is not None:
+                            continue
                         # overwrite internal_token_number when token_number is present
                         flat_records['internal_token_number'] = token['token']['tokenNum']
                         # list sender/receiver
                         if token['transfers'] is None:
+                            simplified_records.append(flat_records)
                             continue
-                        print("token['transfers']", token['transfers'])
                         flat_records['sender'] = [transfer['accountID']['accountNum'] for transfer in token['transfers']  if transfer['amount'] < 0]
                         flat_records['receiver'] = [transfer['accountID']['accountNum'] for transfer in token['transfers'] if transfer['amount'] >= 0]
                         # token burn/mint/transfer amount
