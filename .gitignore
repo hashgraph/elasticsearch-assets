@@ -1,0 +1,17 @@
+.idea
+__pycache__
+.vscode
+.venv
+.DS_Store
+.env
+*.pyc
+*.log
+*.out
+logs/
+outputs/
+recordstreams-processed-list.txt
+.coverage*
+MirrorNodeData/
+htmlcov/**
+external-testnets.json
+mainnet-exports-4e9696cee502.json
