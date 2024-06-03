@@ -109,9 +109,8 @@ class TransactionRecord(BaseModel):
     memo: Optional[str] = ""
     transferList: TransferList = TransferList(accountAmounts=[])
     tokenTransferLists: Optional[list[TokenTransferLists]]
-    contractCreateResult: Optional[dict] = {}
-    contractCallResult: Optional[dict] = {}
-
+    contractCreateResult: Optional[ContractCreateResult] = {}
+    contractCallResult: Optional[ContractCallResult]
 
 class TxRecordParsed(BaseModel):
     status: str
@@ -139,3 +138,5 @@ class TxRecordParsed(BaseModel):
     consensus_create_topicID: Optional[str]
     transfer_list: Optional[list]
     token_transfer_list: Optional[list]
+    contract_create_result: Optional[dict]
+    contract_call_result: Optional[dict]

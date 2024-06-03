@@ -42,6 +42,8 @@ def parseTxRecord(transaction_record: TransactionRecord) -> TxRecordParsed:
         "serialNumbers": transaction_record.receipt.serialNumbers,
         "transfer_list": transaction_record.transferList.accountAmounts,
         "token_transfer_list": transaction_record.tokenTransferLists,
+        "contract_create_result": transaction_record.contractCreateResult,
+        "contract_call_result": transaction_record.contractCallResult
     }
 
     return TxRecordParsed(**output)

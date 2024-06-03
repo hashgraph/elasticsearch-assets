@@ -32,7 +32,7 @@ class RecordFileOrchestrator:
         self.txn_list_size = 5000
         try:
             self.writer = jsonlines.open(
-                settings.LOG_DIR + "/recordstreams" + ".json",
+                settings.PARSER_OUTPUT_DIR + "/recordstreams" + ".json",
                 mode="a",
                 flush=True,
             )
@@ -173,7 +173,7 @@ class RecordFileOrchestrator:
 
                 try:
                     files_to_parse = scan_for_new_files(
-                        f"{settings.PARSED_RECORD_BALANCE_FILES_PATH}{year}/{month}/{day}/",
+                        f"{settings.PARSED_RECORD_STREAM_FILES_PATH}{year}/{month}/{day}/",
                         "rcd",
                     )
                     files_to_parse.sort()
