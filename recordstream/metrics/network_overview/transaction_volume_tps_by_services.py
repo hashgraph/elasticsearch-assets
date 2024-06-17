@@ -1,111 +1,20 @@
 import json
-from optparse import OptionParser
 import os
-import logging
-import logging.config
-import datetime
-
-from pydantic import BaseModel, Field
+import sys
 import pandas as pd
 
-class Txn(BaseModel):
-    status: str
-    transaction_hash: str = Field(alias="record.transactionHash")
-    txn_type: str
-    processed_timestamp:  datetime.datetime = Field(alias="@processed")
-    consensusTimestamp: datetime.datetime
-    node_id: str = Field(alias="body.nodeAccountID.accountNum")
 
+# Add the path to the utils module
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-class NetworkOverview:
+from metrics.utils.common import BaseScript
+from model import Txn
+
+class NetworkOverview(BaseScript):
     def __init__(self):
-        self.starttime = datetime.datetime.now()
+        super().__init__(log_filename="network_overview")
+        # Your HTS-specific initialization code here
         self.script_name = os.path.basename(__file__[:-3])
-
-        # Initialize the parameters
-        self.__init_params__()
-        self.logger = self.init_log()
-        self.__init_env_var__()
-
-    def __init_env_var__(self):
-        # Get the environment variables
-        self.path = os.getenv("PATH")
-        if self.path is None:
-            raise Exception("Environment variable PATH is not set")
-        else:
-            self.logger.info("Environment variable PATH=%s", self.path)
-    
-    def __init_params__(self):
-        # Initialize the parameters
-        parser = OptionParser(usage="%prog [OPTIONS] ...")
-
-        parser.add_option(
-            "-i", "--input_file",
-            action="store",
-            type=str,
-            dest="input_file",
-            help="Path to the recordstream input file")
-
-        parser.add_option(
-            "-o", "--output_folder",
-            action="store",
-            type=str,
-            dest="output_folder",
-            help="Path to the output folder")
-
-        parser.add_option(
-            "-l", "--level", 
-            default="INFO",
-            action="store",
-            type=str,
-            dest="log_level",
-            help="Set the logging level. [DEBUG|INFO|WARNING|ERROR|CRITICAL]")
-
-        # parse the arguments
-        (self.options, self.__args) = parser.parse_args()
-        
-        # validate input parameters
-        if not os.path.exists(self.options.input_file):
-            raise Exception("Input file does not exist")
-        if not os.path.exists(self.options.output_folder):
-            raise Exception("Output folder does not exist")
-        
-        print("Input file: %s", self.options.input_file)
-        print("Output folder: %s", self.options.output_folder)
-        print("Log level: %s", self.options.log_level)
-
-    def init_log(self):
-        """
-        Initialise the log file
-        """
-        level = "INFO"
-
-        if self.options.log_level == "DEBUG":
-            level = logging.DEBUG
-        elif self.options.log_level == "INFO":
-            level = logging.INFO
-        elif self.options.log_level == "WARNING":
-            level = logging.WARNING
-        elif self.options.log_level == "ERROR":
-            level = logging.ERROR
-        elif self.options.log_level == "CRITICAL":
-            level = logging.CRITICAL
-
-        logging.basicConfig(filename=os.path.join(self.options.output_folder + '/' + self.script_name + '.log'),
-                            level=level,
-                            format='%(asctime)s.%(msecs)03d %(levelname)5s: %(name)s %(message)s')
-        logger = logging.getLogger(self.script_name)
-        logger.info("Logger started ...")
-        return logger
-
-    def read_data(self, file_path) -> list[dict]:
-        txns = []
-        with open(file_path, 'r') as file:
-            for line in file:
-                data = json.loads(line)
-                txn = Txn(**data)
-                txns.append(txn.dict())
-        return txns
 
     def rcdstreams_to_pd_df(self, records):
         # Convert records to Pandas DataFrame
@@ -158,25 +67,20 @@ class NetworkOverview:
         network_overview['data_type'] = 'overall'
         return network_overview
 
-    def write_to_json(self, output_name, output_df):
-        # Write output to JSON file
-        output_df.to_json(output_name, orient='records', lines=True)
-
     def run(self):
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file}...")
-            records = self.read_data(self.options.input_file)
+            records = self.read_data(self.options.input_file, Txn)
             records_df = self.rcdstreams_to_pd_df(records)
             cleaned_records = self.clean_records_df(records_df)
             aggregated_records_txn = self.aggregate_recordstreams(cleaned_records)
             aggregated_records_overall = self.aggregate_recordstreams_overall(cleaned_records)
             # merge the two dataframes
             aggregated_records = pd.concat([aggregated_records_txn, aggregated_records_overall])
-            output_filename = f"{self.options.output_folder}/{self.script_name}.json"
+            output_filename = f"{self.options.output_folder}/{self.script_name}"
             self.logger.info(f"Writing aggregated output to {output_filename} ...")
-            self.write_to_json(output_filename, aggregated_records)
-            self.logger.info("Total runtime: %s" % str(datetime.datetime.now() - self.starttime))
+            self.write_df_to_file(output_filename, aggregated_records)
         except Exception as e:
             self.logger.exception("Fatal Error!")
             self.logger.info(e)
