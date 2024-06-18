@@ -3,6 +3,15 @@
 
 This repository contains scripts and pipeline configurations to ingest Hedera data. These services function as a private mirror node, exposing data on the Hedera ledger.
 
+
+## Table of Contents
+- [Recordstream Parser](#recordstream-parser)
+- [Hedera Ledger Ingestion Services](#hedera-ledger-ingestion-services)
+   - [Components](#components)
+- [Local Environment](#local-environment)
+- [Backfilling Missing Data](#backfilling-missing-data)
+
+
 ## Hedera Ledger Ingestion Services
 
 The ingestion process involves downloading files from a node's Google bucket and storing them in a local directory. A parser (orchestrator.py) then processes these files, decodes them, parses the data, and writes the parsed output to a file.
@@ -24,7 +33,7 @@ To run the Hedera repository locally, follow these steps:
 1. **Clone the Hedera Repository**
    ```bash
    git clone https://github.com/hashgraph/elasticsearch-assets.git
-   cd elasticsearch-assets
+   cd elasticsearch-assets/recordstream
    ```
 
 2. **Create a `.env` File**
@@ -62,6 +71,7 @@ To run the Hedera repository locally, follow these steps:
 
 5. **Install Packages with Poetry**
    ```bash
+   cd parser
    poetry install
    ```
 
@@ -99,3 +109,11 @@ If there is a bug in a parser or any downtime, backfilling data might be necessa
      poetry run python hedera/cli.py record-file-orchestrator --backfill-marker "<pattern>"
      ```
    - The `marker` parameter specifies the local directory where the files have been downloaded. Use the format: `YYYY-MM-DD`.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.
