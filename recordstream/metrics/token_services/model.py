@@ -43,3 +43,10 @@ class Txn(BaseModel):
     token_transfer_list: list[TokenTransferList] | None = None
     transfer_list: list[AccountID] | None = None
     token_number: str | None = None
+
+
+class Token(BaseModel):
+    name: str
+    symbol: str
+    token_id: str
+    type: str

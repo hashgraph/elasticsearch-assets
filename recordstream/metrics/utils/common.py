@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import logging
@@ -62,14 +63,14 @@ class BaseScript(ABC):
 
         self.options, self.__args = parser.parse_args()
 
-        if not os.path.exists(self.options.input_file):
-            raise Exception("Input file does not exist")
-        if not os.path.exists(self.options.output_folder):
-            raise Exception("Output folder does not exist")
+        # if not os.path.exists(self.options.input_file):
+        #     raise Exception("Input file does not exist")
+        # if not os.path.exists(self.options.output_folder):
+        #     raise Exception("Output folder does not exist")
 
-        print("Input file: %s", self.options.input_file)
-        print("Output folder: %s", self.options.output_folder)
-        print("Output format: %s", self.options.output_format)
+        print("Input file: %s", self.options.input_file if self.options.input_file else "None")
+        print("Output folder: %s", self.options.output_folder if self.options.output_folder else "None")
+        print("Output format: %s", self.options.output_format if self.options.output_format else "None")
         print("Log level: %s", self.options.log_level)
 
     def init_log(self):
@@ -97,13 +98,36 @@ class BaseScript(ABC):
         return logger
 
     def read_data(self, file_path, Txn) -> list[dict]:
-        txns = []
-        with open(file_path, 'r') as file:
-            for line in file:
-                data = json.loads(line)
-                txn = Txn(**data)
-                txns.append(txn.dict())
-        return txns
+        try:
+            txns = []
+            if file_path.endswith('.json'):
+                with open(file_path, 'r') as file:
+                    for line in file:
+                        data = json.loads(line)
+                        txn = Txn(**data)
+                        txns.append(txn.dict())
+            elif file_path.endswith('.csv'):
+                with open(file_path, 'r') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        txn = Txn(**row)
+                        txns.append(txn.dict())
+            else:
+                raise Exception("Invalid input file format")
+                return None
+            return txns
+        except FileNotFoundError:
+            self.logger.error(f"File not found: {file_path}")
+            return None
+        except json.JSONDecodeError:
+            self.logger.error(f"Error decoding JSON from file: {file_path}")
+            return None
+        except csv.Error:
+            self.logger.error(f"Error reading CSV file: {file_path}")
+            return None
+        except Exception as e:
+            self.logger.error(f"An error occurred while reading the file: {e}")
+            return None
 
     def write_df_to_file(self, output_filename, output_df):
         output_filename = f"{output_filename}_{self.starttime.strftime('%Y%m%d%H%M%S')}.{self.options.output_format}"
