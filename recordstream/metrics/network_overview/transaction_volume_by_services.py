@@ -57,7 +57,7 @@ class NetworkOverview(BaseScript):
             'smart_contract_total': x[x['txn_type'].str.contains('CONTRACT')]['transaction_hash'].count(),
             'file_total': x[x['txn_type'].str.contains('FILE')]['transaction_hash'].count(),
             'ethereum_total': x[x['txn_type'].str.contains('ETHEREUM')]['transaction_hash'].count(),
-            'staking_total': x[x['txn_type'].str.contains('NODE_STAKING')]['transaction_hash'].count(),
+            'staking_total': x[x['txn_type'].str.contains('NODESTAKE')]['transaction_hash'].count(),
             'total': x['transaction_hash'].count()
             })).reset_index()
         # Transform the group_txn DataFrame to a long format

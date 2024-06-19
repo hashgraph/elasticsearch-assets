@@ -4,6 +4,8 @@ import logging
 import datetime
 from optparse import OptionParser
 
+import pandas as pd
+
 from abc import ABC, abstractmethod
 
 
@@ -113,3 +115,8 @@ class BaseScript(ABC):
             output_df.to_csv(output_filename, index=False)
         else:
             raise Exception("Invalid output format")
+    
+    def rcdstreams_to_pd_df(self, records):
+        # Convert records to Pandas DataFrame
+        records_df = pd.DataFrame(records)
+        return records_df
