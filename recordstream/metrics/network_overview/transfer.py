@@ -7,7 +7,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from metrics.utils.common import BaseScript
-from model import TxnWithTransfer
+from network_overview.model import TxnWithTransfer
 
 class NetworkOverview(BaseScript):
     def __init__(self):

@@ -7,7 +7,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from metrics.utils.common import BaseScript
-from model import Txn
+from network_overview.model import Txn
 
 service_mapping = {
     "CONTRACTCREATEINSTANCE": "HSCS",

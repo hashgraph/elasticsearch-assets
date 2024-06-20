@@ -1,14 +1,12 @@
-import json
 import os
 import sys
-import pandas as pd
 
 
 # Add the path to the utils module
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from metrics.utils.common import BaseScript
-from model import Txn
+from network_overview.model import Txn
 
 class NetworkOverview(BaseScript):
     def __init__(self):

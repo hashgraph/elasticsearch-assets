@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 import pandas as pd
@@ -8,7 +7,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from metrics.utils.common import BaseScript
-from model import Txn
+from network_overview.model import Txn
 
 class NetworkOverview(BaseScript):
     def __init__(self):
@@ -46,6 +45,8 @@ class NetworkOverview(BaseScript):
         Returns:
             DataFrame: The aggregated DataFrame with columns for rounded timestamp, transaction type, transaction count, and data type.
         """
+        # Filter out status != 22
+        records_df = records_df[records_df['status'] == '22']
         # Aggregate record streams DataFrame 
         # Get the total number of transactions by transaction type per minute
         group_txn = records_df.groupby(['rounded_timestamp', 'txn_type'])['transaction_hash'].count().reset_index()
