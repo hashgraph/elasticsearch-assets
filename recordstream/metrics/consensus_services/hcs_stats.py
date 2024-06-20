@@ -10,14 +10,22 @@ from metrics.utils.common import BaseScript
 from model import Txn
 
 
-class NetworkOverview(BaseScript):
+class HCSServices(BaseScript):
     def __init__(self):
         super().__init__(log_filename="consensus_services")
         # Your HTS-specific initialization code here
         self.script_name = os.path.basename(__file__[:-3])
     
     def transform_data(self, records):
-        # Extract only timestamp and unnested accountNum from the transfer_list column
+        """
+        Transforms the given records by extracting only the timestamp and unnested accountNum from the transfer_list column.
+        
+        Args:
+            records (list): A list of records to be transformed.
+            
+        Returns:
+            list: A list of simplified records that meet the specified conditions.
+        """
         simplified_records = [
             record 
             for record in records 
@@ -26,17 +34,23 @@ class NetworkOverview(BaseScript):
         ]
         return simplified_records
 
-    def rcdstreams_to_pd_df(self, records):
-        # Convert records to Pandas DataFrame
-        records_df = pd.DataFrame(records)
-        return records_df
-
     def clean_records_df(self, records_df):
-        # Clean records DataFrame
+        """
+        Clean the records DataFrame by performing the following operations:
+        1. Remove duplicate rows.
+        2. Add a rounded timestamp column to the DataFrame by flooring the 'consensusTimestamp' to the nearest minute.
+        3. Add a high-level transaction type based on the 'txn_type' column.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The cleaned records DataFrame.
+        """
         records_df.drop_duplicates(inplace=True)
-        # add rounded timestamp to a minute
         records_df['rounded_timestamp'] = records_df['consensusTimestamp'].dt.floor('min')
-        # add high level transaction type based on txn_type
+
+        # Add high level transaction type based on txn_type
 
         return records_df
 
@@ -45,6 +59,16 @@ class NetworkOverview(BaseScript):
         return series[series != 0].nunique()
 
     def aggregate_recordstreams_by_type(self, records_df):
+        """
+        Aggregate record streams DataFrame by transaction type.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the record streams.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with transaction counts, consensus bytes,
+                              and distinct topic IDs per minute per transaction type.
+        """
         # Aggregate record streams DataFrame
         # Count the number of transactions per minute per txn_type
         group_txn = records_df.groupby(['rounded_timestamp', 'txn_type']).agg(
@@ -59,7 +83,20 @@ class NetworkOverview(BaseScript):
         return group_txn
     
     def aggregate_recordstreams_submitted_topics(self, records_df):
-        # Aggregate record streams DataFrame for CONSENSUSSUBMITMESSAGE
+        """
+        Aggregates the record streams DataFrame for CONSENSUSSUBMITMESSAGE.
+
+        Args:
+            records_df (DataFrame): The DataFrame containing the record streams.
+
+        Returns:
+            DataFrame: The aggregated DataFrame with the following columns:
+                - rounded_timestamp: The rounded timestamp of the record.
+                - consensus_submit_topicID: The topic ID of the consensus submit message.
+                - transaction_count: The count of transactions for the given timestamp and topic ID.
+                - consensus_bytes: The sum of consensus submit message bytes for the given timestamp and topic ID.
+                - tps: The transactions per second calculated based on the transaction count.
+        """
         group_txn = records_df.groupby(['rounded_timestamp', 'consensus_submit_topicID']).agg(
             transaction_count=pd.NamedAgg(column="transaction_hash", aggfunc="count"),
             consensus_bytes=pd.NamedAgg(column="consensus_submit_message_bytes", aggfunc="sum")
@@ -68,6 +105,19 @@ class NetworkOverview(BaseScript):
         return group_txn
 
     def run(self):
+        """
+        Executes the main logic of the HCSStats class.
+
+        Reads data from the input file, performs data transformation and cleaning,
+        aggregates the records by type and submitted topics, and writes the aggregated
+        output to JSON files.
+
+        Raises:
+            Exception: If any error occurs during the execution.
+
+        Returns:
+            None
+        """
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file} ...")
@@ -92,5 +142,5 @@ class NetworkOverview(BaseScript):
             exit(1)
 
 if __name__ == "__main__":
-    myObject = NetworkOverview()
+    myObject = HCSServices()
     myObject.run()

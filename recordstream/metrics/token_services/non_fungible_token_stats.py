@@ -17,7 +17,17 @@ class NFTS(BaseScript):
         self.script_name = os.path.basename(__file__[:-3])
     
     def transform_data(self, records):
-        # Extract only timestamp and unnested accountNum from the transfer_list column
+        """
+        Transforms the given records by extracting relevant information and returning a simplified list of records.
+        Filter for TOKEN transaction and remove records with status != 22
+
+        Args:
+            records (list): A list of records to be transformed.
+
+        Returns:
+            list: A simplified list of records containing the extracted information.
+
+        """
         simplified_records = []
         for record in records:
             if record['status'] == '22' and ('NFT' in record['txn_type'] or 'TOKEN' in record['txn_type']):
@@ -55,21 +65,35 @@ class NFTS(BaseScript):
                         simplified_records.append(flat_records)
         return simplified_records
 
-    def rcdstreams_to_pd_df(self, records):
-        # Convert records to Pandas DataFrame
-        records_df = pd.DataFrame(records)
-        return records_df
-
     def clean_records_df(self, records_df):
-        # Clean records DataFrame
+        """
+        Clean the records DataFrame by performing the following operations:
+        1. Remove duplicate rows based on 'transaction_hash', 'token_number', and 'internal_token_number' columns.
+        2. Add a new column 'rounded_timestamp' that contains the rounded timestamp to the nearest minute.
+        3. Add a new column 'high_level_transaction_type' based on the 'txn_type' column.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The cleaned records DataFrame.
+        """
         records_df.drop_duplicates(inplace=True, ignore_index=True, subset=['transaction_hash', 'token_number', 'internal_token_number'])
-        # add rounded timestamp to a minute
         records_df['rounded_timestamp'] = records_df['consensusTimestamp'].dt.floor('min')
         # add high level transaction type based on txn_type
 
         return records_df
 
     def aggregate_recordstreams_by_type(self, records_df):
+        """
+        Aggregate the record streams DataFrame by transaction type.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the record streams.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with the count of transactions per transaction type.
+        """
         # Aggregate record streams DataFrame
         # Count the number of transactions per txn_type
         group_txn = records_df.groupby(['txn_type']).agg(
@@ -84,6 +108,15 @@ class NFTS(BaseScript):
         return group_txn
 
     def aggregate_recordstreams_by_token(self, records_df):
+        """
+        Aggregates the given records DataFrame by internal_token_number and txn_type.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with columns internal_token_number, txn_type, and transaction_count.
+        """
         # Aggregate data by internal_token_number
         group_txn = records_df.groupby(['internal_token_number', 'txn_type']).agg(
             transaction_count=pd.NamedAgg(column="transaction_hash", aggfunc="count")
@@ -92,6 +125,16 @@ class NFTS(BaseScript):
         return group_txn
     
     def aggregate_recordstreams_by_account(self, records_df):
+        """
+        Aggregates record streams by account.
+
+        Args:
+            records_df (DataFrame): The input DataFrame containing the records.
+
+        Returns:
+            DataFrame: The aggregated data grouped by account.
+
+        """
         # explode payer column
         payer_df = records_df.explode('payer')
         # Aggregate data by account
@@ -123,19 +166,14 @@ class NFTS(BaseScript):
         group_txn = pd.concat([group_txn, group_txn_sender, group_txn_receiver], ignore_index=True)
 
         return group_txn
-    
-    def write_df_to_file(self, output_filename, output_df):
-        output_filename = f"{output_filename}_{self.starttime.strftime('%Y%m%d%H%M%S')}.{self.options.output_format}"
-        if self.options.output_format == 'json':    
-            # Write output to JSON file
-            output_df.to_json(output_filename, orient='records', lines=True)
-        elif self.options.output_format == 'csv':
-            # Write output to CSV file
-            output_df.to_csv(output_filename, index=False)
-        else:
-            raise Exception("Invalid output format")
 
     def run(self):
+        """
+        Executes the main logic of the NFT script.
+        
+        Reads data from the input file, processes and aggregates the records,
+        and writes the output to separate files.
+        """
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file} ...")

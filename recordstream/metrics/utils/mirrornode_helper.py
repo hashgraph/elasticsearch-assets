@@ -5,6 +5,21 @@ from time import sleep
 mainnet_base_url = "https://mainnet-public.mirrornode.hedera.com"
 testnet_base_url = "https://testnet.mirrornode.hedera.com"
 
+ft_keys_api = {
+    "token_id": "token_id",
+    "treasury_account_id": "token_account_number",
+    "created_timestamp": "consensus_timestamp",
+    "name": "token_name",
+    "symbol": "token_symbol",
+    "decimals": "token_decimals",
+    "initial_supply": "token_initial_supply",
+}
+nft_keys_api = {
+    "token_id": "token_id",
+    "symbol": "nft_symbol",
+    "treasury_account_id": "account",
+    "created_timestamp": "consensus_timestamp",
+}
 
 
 def http_get_with_retry(url, max_retries=3, backoff_factor=0.3, timeout=10):
@@ -108,41 +123,41 @@ def get_mirrornode_token_balance(logger, token_id: str, network: str = "mainnet"
     :return: set with all tokens of token_type returned by the mirror node
     """
     token_balances = []
-    token_api_endpoint = f"/api/v1/tokens/0.0.{token_id}/balances"
+    token_api_endpoint = f"/api/v1/tokens/{token_id}/balances"
     while token_api_endpoint is not None:
         try:
             response = get_mirrornode(token_api_endpoint, logger=logger)
-            token_balances = parse_token(token_balances, response)
+            token_balances = parse_token_balance(token_balances, response)
+            import pdb; pdb.set_trace()
             token_api_endpoint = response["links"]["next"]
             logger.info(f"Next was {token_api_endpoint}")
         except Exception as e:
             logger.warning(f"Exception: {e}. Next was {token_api_endpoint} ")
-    else:
-        return 0, []
+            return None
+    return token_balances
 
 
-def parse_token_details(token_detail_list, response, token_type):
+def parse_token_details(token_detail_list, response):
     """parses the response from the mirror node, with the right fields to write to the created index
 
     :param response: response from querying the mirror nodethe mirror node
     """
-    if token_type == "fungible":
-        if response["type"] == "FUNGIBLE_COMMON":
-            _output = {}
-            for key, new_key in ft_keys_api.items():
-                _output[new_key] = response[key]
-            _output["token_number"] = int(response["token_id"].split(".")[-1])
-            _output["token_decimals"] = int(_output["token_decimals"])
-            _output["token_initial_supply"] = int(_output["token_initial_supply"])
-            _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
-            _output["uuid"] = f"{_output['token_number']}-{_output['consensus_timestamp']}"
-            token_detail_list.append(_output)
-    else:
-        if response["type"] == "NON_FUNGIBLE_UNIQUE":
-            _output = {}
-            for key, new_key in nft_keys_api.items():
-                _output[new_key] = response[key]
-            _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
-            _output["uuid"] = f"{_output['token_id']}-{_output['consensus_timestamp']}"
-            token_detail_list.append(_output)
+    if response["type"] == "FUNGIBLE_COMMON":
+        _output = {}
+        for key, new_key in ft_keys_api.items():
+            _output[new_key] = response[key]
+        _output["token_number"] = int(response["token_id"].split(".")[-1])
+        _output["token_decimals"] = int(_output["token_decimals"])
+        _output["token_initial_supply"] = int(_output["token_initial_supply"])
+        _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
+        _output["uuid"] = f"{_output['token_number']}-{_output['consensus_timestamp']}"
+        token_detail_list.append(_output)
+
+    if response["type"] == "NON_FUNGIBLE_UNIQUE":
+        _output = {}
+        for key, new_key in nft_keys_api.items():
+            _output[new_key] = response[key]
+        _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
+        _output["uuid"] = f"{_output['token_id']}-{_output['consensus_timestamp']}"
+        token_detail_list.append(_output)
     return token_detail_list

@@ -15,15 +15,29 @@ class TokenList(BaseScript):
         self.script_name = os.path.basename(__file__[:-3])
 
     def get_token_list(self):
-        self.logger.info("Getting token list")
-        try:
-            tokens = mirrornode_helper.get_mirrornode_token_list(self.logger)
-            return tokens
-        except Exception as e:
-            self.logger.error(f"Exception: {e}")
-            return None
+            """
+            Retrieves the token list from the Mirror Node.
+
+            Returns:
+                list: A list of tokens.
+                None: If an exception occurs during the retrieval process.
+            """
+            self.logger.info("Getting token list")
+            try:
+                tokens = mirrornode_helper.get_mirrornode_token_list(self.logger)
+                return tokens
+            except Exception as e:
+                self.logger.error(f"Exception: {e}")
+                return None
     
     def run(self):
+        """
+        Executes the token list retrieval process.
+        
+        This method retrieves the token list, converts it to a pandas DataFrame,
+        and writes the data to a file. If the token list retrieval fails, an error
+        message is logged.
+        """
         self.logger.info("Getting token list")
         tokens = self.get_token_list()
         if tokens is not None:

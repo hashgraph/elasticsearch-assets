@@ -11,10 +11,19 @@ from abc import ABC, abstractmethod
 
 
 class BaseScript(ABC):
+    """
+    BaseScript is an abstract base class that provides common functionality for scripts.
+    """
+
     @abstractmethod
     def __init__(self, log_filename):
+        """
+        Initializes the BaseScript object.
+
+        Args:
+            log_filename (str): The name of the log file.
+        """
         self.starttime = datetime.datetime.now()
-        # self.script_name = os.path.basename(__file__[:-3])
         self.log_filename = log_filename
 
         self.__init_params__()
@@ -22,6 +31,12 @@ class BaseScript(ABC):
         self.__init_env_var__()
 
     def __init_env_var__(self):
+        """
+        Initializes the environment variable.
+
+        Raises:
+            Exception: If the environment variable PATH is not set.
+        """
         self.path = os.getenv("PATH")
         if self.path is None:
             raise Exception("Environment variable PATH is not set")
@@ -29,6 +44,9 @@ class BaseScript(ABC):
             self.logger.info("Environment variable PATH=%s", self.path)
 
     def __init_params__(self):
+        """
+        Initializes the script parameters.
+        """
         parser = OptionParser(usage="%prog [OPTIONS] ...")
 
         parser.add_option(
@@ -63,11 +81,6 @@ class BaseScript(ABC):
 
         self.options, self.__args = parser.parse_args()
 
-        # if not os.path.exists(self.options.input_file):
-        #     raise Exception("Input file does not exist")
-        # if not os.path.exists(self.options.output_folder):
-        #     raise Exception("Output folder does not exist")
-
         print("Input file: %s", self.options.input_file if self.options.input_file else "None")
         print("Output folder: %s", self.options.output_folder if self.options.output_folder else "None")
         print("Output format: %s", self.options.output_format if self.options.output_format else "None")
@@ -75,7 +88,10 @@ class BaseScript(ABC):
 
     def init_log(self):
         """
-        Initialise the log file
+        Initializes the log file.
+
+        Returns:
+            logging.Logger: The logger object.
         """
         level = "INFO"
 
@@ -98,6 +114,22 @@ class BaseScript(ABC):
         return logger
 
     def read_data(self, file_path, Txn) -> list[dict]:
+        """
+        Reads data from a file and returns a list of dictionaries.
+
+        Args:
+            file_path (str): The path to the input file.
+            Txn (Type): The type of transaction object.
+
+        Returns:
+            list[dict]: A list of dictionaries representing the transactions.
+
+        Raises:
+            FileNotFoundError: If the file is not found.
+            json.JSONDecodeError: If there is an error decoding JSON from the file.
+            csv.Error: If there is an error reading the CSV file.
+            Exception: If there is an error reading the file.
+        """
         try:
             txns = []
             if file_path.endswith('.json'):
@@ -130,6 +162,16 @@ class BaseScript(ABC):
             return None
 
     def write_df_to_file(self, output_filename, output_df):
+        """
+        Writes a DataFrame to a file.
+
+        Args:
+            output_filename (str): The name of the output file.
+            output_df (pandas.DataFrame): The DataFrame to write.
+
+        Raises:
+            Exception: If the output format is invalid.
+        """
         output_filename = f"{output_filename}_{self.starttime.strftime('%Y%m%d%H%M%S')}.{self.options.output_format}"
         if self.options.output_format == 'json':    
             # Write output to JSON file
@@ -141,6 +183,14 @@ class BaseScript(ABC):
             raise Exception("Invalid output format")
     
     def rcdstreams_to_pd_df(self, records):
-        # Convert records to Pandas DataFrame
+        """
+        Converts records to a Pandas DataFrame.
+
+        Args:
+            records (list[dict]): A list of dictionaries representing the records.
+
+        Returns:
+            pandas.DataFrame: The DataFrame containing the records.
+        """
         records_df = pd.DataFrame(records)
         return records_df

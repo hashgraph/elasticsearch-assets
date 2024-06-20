@@ -17,15 +17,36 @@ class NetworkOverview(BaseScript):
         self.script_name = os.path.basename(__file__[:-3])
 
     def clean_records_df(self, records_df):
-        # Clean records DataFrame
+        """
+        Clean the records DataFrame by performing the following operations:
+        1. Remove duplicate rows.
+        2. Add a rounded timestamp column by flooring the 'consensusTimestamp' to the nearest minute.
+        3. Add a high-level transaction type based on the 'txn_type' column.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The cleaned records DataFrame.
+        """
         records_df.drop_duplicates(inplace=True)
-        # add rounded timestamp to a minute
         records_df['rounded_timestamp'] = records_df['consensusTimestamp'].dt.floor('min')
-        # add high level transaction type based on txn_type
+
+        # Add high level transaction type based on txn_type
 
         return records_df
 
     def aggregate_recordstreams(self, records_df):
+        """
+        Aggregate the record streams DataFrame by filtering out records with status != 22,
+        and then calculate the total number of transactions by transaction type per minute.
+
+        Args:
+            records_df (DataFrame): The input DataFrame containing the records.
+
+        Returns:
+            DataFrame: The aggregated DataFrame with the total number of transactions by transaction type per minute.
+        """
         # Aggregate record streams DataFrame
         # Filter out status != 22
         records_df = records_df[records_df['status'] == '22']
@@ -34,6 +55,15 @@ class NetworkOverview(BaseScript):
         return network_overview
 
     def run(self):
+        """
+        Executes the main logic of the Network Overall script.
+        
+        Reads data from the input file, cleans and aggregates the records,
+        and writes the output to a file.
+        
+        Raises:
+            Exception: If any fatal error occurs during the execution.
+        """
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file}...")

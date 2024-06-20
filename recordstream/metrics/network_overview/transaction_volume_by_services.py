@@ -16,21 +16,36 @@ class NetworkOverview(BaseScript):
         # Your HTS-specific initialization code here
         self.script_name = os.path.basename(__file__[:-3])
 
-    def rcdstreams_to_pd_df(self, records):
-        # Convert records to Pandas DataFrame
-        records_df = pd.DataFrame(records)
-        return records_df
-
     def clean_records_df(self, records_df):
-        # Clean records DataFrame
+        """
+        Cleans the records DataFrame by performing the following operations:
+        - Removes duplicate rows.
+        - Adds a rounded timestamp column to the DataFrame by rounding the 'consensusTimestamp' column to the nearest minute.
+        - Adds a high level transaction type column based on the 'txn_type' column.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The cleaned records DataFrame.
+        """
         records_df.drop_duplicates(inplace=True)
-        # add rounded timestamp to a minute
         records_df['rounded_timestamp'] = records_df['consensusTimestamp'].dt.floor('min')
-        # add high level transaction type based on txn_type
+
+        # Add high level transaction type based on txn_type
 
         return records_df
 
     def aggregate_recordstreams(self, records_df):
+        """
+        Aggregate the record streams DataFrame to get the total number of transactions by transaction type per minute.
+
+        Args:
+            records_df (DataFrame): The input DataFrame containing the records.
+
+        Returns:
+            DataFrame: The aggregated DataFrame with columns for rounded timestamp, transaction type, transaction count, and data type.
+        """
         # Aggregate record streams DataFrame 
         # Get the total number of transactions by transaction type per minute
         group_txn = records_df.groupby(['rounded_timestamp', 'txn_type'])['transaction_hash'].count().reset_index()
@@ -43,22 +58,32 @@ class NetworkOverview(BaseScript):
         return group_txn
 
     def aggregate_recordstreams_overall(self, records_df):
+        """
+        Aggregates the record streams DataFrame and calculates the transaction volume by services.
+
+        Args:
+            records_df (DataFrame): The input DataFrame containing the records.
+
+        Returns:
+            DataFrame: The aggregated DataFrame with transaction volume by services.
+
+        """
         # Aggregate record streams DataFrame
         # Filter out status != 22
         records_df = records_df[records_df['status'] == '22']
         # Get the total number of transactions by transaction type per minute
         group_txn = records_df.groupby('rounded_timestamp').apply(
             lambda x: pd.Series({
-            'crypto_total': x[(x['txn_type'].str.contains('CRYPTO')) & (x['txn_type'] != 'CRYPTOCREATEACCOUNT')]['transaction_hash'].count(),
-            'create_account_total': x[x['txn_type'] == 'CRYPTOCREATEACCOUNT']['transaction_hash'].count(),
-            'hcs_total': x[x['txn_type'].str.contains('CONSENSUS')]['transaction_hash'].count(),
-            'hts_fungible_total': x[x['txn_type'].str.contains('TOKEN')]['transaction_hash'].count(),
-            'hts_nft_total': x[x['txn_type'].str.contains('NFT')]['transaction_hash'].count(),
-            'smart_contract_total': x[x['txn_type'].str.contains('CONTRACT')]['transaction_hash'].count(),
-            'file_total': x[x['txn_type'].str.contains('FILE')]['transaction_hash'].count(),
-            'ethereum_total': x[x['txn_type'].str.contains('ETHEREUM')]['transaction_hash'].count(),
-            'staking_total': x[x['txn_type'].str.contains('NODESTAKE')]['transaction_hash'].count(),
-            'total': x['transaction_hash'].count()
+                'crypto_total': x[(x['txn_type'].str.contains('CRYPTO')) & (x['txn_type'] != 'CRYPTOCREATEACCOUNT')]['transaction_hash'].count(),
+                'create_account_total': x[x['txn_type'] == 'CRYPTOCREATEACCOUNT']['transaction_hash'].count(),
+                'hcs_total': x[x['txn_type'].str.contains('CONSENSUS')]['transaction_hash'].count(),
+                'hts_fungible_total': x[x['txn_type'].str.contains('TOKEN')]['transaction_hash'].count(),
+                'hts_nft_total': x[x['txn_type'].str.contains('NFT')]['transaction_hash'].count(),
+                'smart_contract_total': x[x['txn_type'].str.contains('CONTRACT')]['transaction_hash'].count(),
+                'file_total': x[x['txn_type'].str.contains('FILE')]['transaction_hash'].count(),
+                'ethereum_total': x[x['txn_type'].str.contains('ETHEREUM')]['transaction_hash'].count(),
+                'staking_total': x[x['txn_type'].str.contains('NODESTAKE')]['transaction_hash'].count(),
+                'total': x['transaction_hash'].count()
             })).reset_index()
         # Transform the group_txn DataFrame to a long format
         network_overview = group_txn.melt(id_vars=['rounded_timestamp'], var_name='transaction_type', value_name='transaction_count')
@@ -68,6 +93,15 @@ class NetworkOverview(BaseScript):
         return network_overview
 
     def run(self):
+        """
+        Executes the main logic of the Network Overall script.
+        
+        Reads data from the input file, performs data cleaning and aggregation,
+        and writes the aggregated output to a file.
+        
+        Raises:
+            Exception: If any fatal error occurs during the execution.
+        """
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file}...")

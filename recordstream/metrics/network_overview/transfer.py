@@ -16,6 +16,15 @@ class NetworkOverview(BaseScript):
         self.script_name = os.path.basename(__file__[:-3])
     
     def map_txn_type(self, txn_type):
+        """
+        Maps a transaction type to a specific category.
+
+        Args:
+            txn_type (str): The transaction type to be mapped.
+
+        Returns:
+            str: The mapped category for the transaction type.
+        """
         if 'CRYPTO' in txn_type:
             return 'CRYPTO'
         elif 'CONSENSUS' in txn_type:
@@ -36,6 +45,16 @@ class NetworkOverview(BaseScript):
             return 'OTHER'
     
     def classify_transfer_type(self, transfer_amount):
+        """
+        Classifies the transfer type based on the transfer amount.
+
+        Args:
+            transfer_amount (int): The amount of the transfer.
+
+        Returns:
+            str: The classification of the transfer type.
+
+        """
         if transfer_amount > 1_000_000_000:
             return 'gigantic_txn'
         
@@ -55,6 +74,16 @@ class NetworkOverview(BaseScript):
             return 'micro_txn'
         
     def transform_data(self, records):
+        """
+        Transforms the given records into a simplified format.
+
+        Args:
+            records (list): A list of records to be transformed.
+
+        Returns:
+            list: A list of simplified records.
+
+        """
         simplified_records = []
         for record in records:
             if record['status'] == '22':
@@ -104,15 +133,37 @@ class NetworkOverview(BaseScript):
         return simplified_records
 
     def clean_records_df(self, records_df):
-        # Clean records DataFrame
+        """
+        Clean the records DataFrame by performing the following operations:
+        - Remove duplicate records based on the 'transaction_hash' column.
+        - Add a new column 'rounded_timestamp' that contains the rounded timestamp to the nearest minute.
+        - Add a high-level transaction type based on the 'txn_type' column.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The cleaned records DataFrame.
+        """
         records_df.drop_duplicates(inplace=True, ignore_index=True, subset=['transaction_hash'])
-        # add rounded timestamp to a minute
         records_df['rounded_timestamp'] = records_df['consensusTimestamp'].dt.floor('min')
-        # add high level transaction type based on txn_type
+
+        # Add high level transaction type based on txn_type
 
         return records_df
 
     def overall_transfer(self, records_df):
+        """
+        Calculate the overall transfer metrics based on the provided records DataFrame.
+
+        Parameters:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The aggregated records DataFrame with total transfer, network fee, node fee,
+                              send amount, and receive amount.
+
+        """
         # Aggregate records to calculate total transfer, network fee, node fee, send amount, receive amount
         aggregated_records = records_df.groupby(['rounded_timestamp']).agg(
             total_transfer=('total_transfer', 'sum'),
@@ -123,6 +174,16 @@ class NetworkOverview(BaseScript):
         return aggregated_records
 
     def transfer_by_type(self, records_df):
+        """
+        Aggregate records by transfer type to calculate total transfer.
+
+        Args:
+            records_df (pandas.DataFrame): The input DataFrame containing records.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with columns for rounded timestamp, transfer type,
+            transaction count, and total transfer.
+        """
         # Aggregate records to calculate total transfer, network fee, node fee, send amount, receive amount
         aggregated_records = records_df.groupby(['rounded_timestamp', 'transfer_type']).agg(
             txn_count=('transaction_hash', 'count'),
@@ -131,6 +192,15 @@ class NetworkOverview(BaseScript):
         return aggregated_records
 
     def aggregate_by_payer(self, records_df):
+        """
+        Aggregate records by payer to calculate various metrics.
+
+        Parameters:
+        - records_df (pandas.DataFrame): DataFrame containing the records to be aggregated.
+
+        Returns:
+        - pandas.DataFrame: DataFrame with aggregated metrics for each payer.
+        """
         # Aggregate records to calculate total transfer, network fee, node fee, send amount, receive amount
         payer_transfer = records_df.groupby(['rounded_timestamp', 'payer']).apply(
             lambda x: pd.Series({
@@ -151,6 +221,22 @@ class NetworkOverview(BaseScript):
         return payer_transfer
 
     def aggregate_by_sender(self, records_df):
+        """
+        Aggregate records by sender to calculate total transfer, network fee, node fee, send amount, and receive amount.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with calculated metrics for each receiver.
+                The DataFrame contains the following columns:
+                - rounded_timestamp: The rounded timestamp of the record.
+                - sender_id: The ID of the receiver.
+                - txn_count: The number of transactions received by the receiver.
+                - sender_transfer: The total amount received by the receiver.
+                - crypto_txn_count: The number of cryptocurrency transactions received by the receiver.
+                - token_txn_count: The number of token transactions received by the receiver.
+        """
         # Aggregate records to calculate total transfer, network fee, node fee, send amount, receive amount
         # Normalize and explode the sender column
         sender_df = records_df.explode('sender').reset_index(drop=True)
@@ -169,6 +255,22 @@ class NetworkOverview(BaseScript):
         return sender_transfer
     
     def aggregate_by_receiver(self, records_df):
+        """
+        Aggregate records by receiver.
+
+        Args:
+            records_df (pandas.DataFrame): The DataFrame containing the records.
+
+        Returns:
+            pandas.DataFrame: The aggregated DataFrame with calculated metrics for each receiver.
+                The DataFrame contains the following columns:
+                - rounded_timestamp: The rounded timestamp of the record.
+                - receiver_id: The ID of the receiver.
+                - txn_count: The number of transactions received by the receiver.
+                - receive_transfer: The total amount received by the receiver.
+                - crypto_txn_count: The number of cryptocurrency transactions received by the receiver.
+                - token_txn_count: The number of token transactions received by the receiver.
+        """
         # Aggregate records to calculate total transfer, network fee, node fee, send amount, receive amount
         # Normalize and explode the receiver column
         receiver_df = records_df.explode('receiver').reset_index(drop=True)
@@ -187,6 +289,18 @@ class NetworkOverview(BaseScript):
         return receiver_transfer
 
     def run(self):
+        """
+        Executes the main logic of the transfer script.
+
+        This method reads data from an input file, performs data transformation and cleaning,
+        aggregates the records based on different criteria, and writes the aggregated data to output files.
+
+        Raises:
+            Exception: If any error occurs during the execution of the script.
+
+        Returns:
+            None
+        """
         self.logger.info("Run method started ...")
         try:
             self.logger.info(f"Reading data from {self.options.input_file}...")
