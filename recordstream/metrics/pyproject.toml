@@ -5,6 +5,14 @@ description = "Opensource recordstream"
 authors = ["Ngan <ngan88le@gmail.com>"]
 readme = "README.md"
 
+packages = [
+    {include = "account_overview"},
+    {include = "consensus_services"},
+    {include = "network_overview"},
+    {include = "token_services"},
+    {include = "smart_contract_services"}
+]
+
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 numpy = "^1.21.0"
@@ -22,6 +30,7 @@ requests-mock = "^1.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
+pytest-mock = "^3.10.0"
 flake8 = "^6.0.0"
 flake8-bugbear = "23.3.23"
 autopep8 = "^1.5.4"

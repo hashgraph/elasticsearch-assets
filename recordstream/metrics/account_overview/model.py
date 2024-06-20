@@ -18,5 +18,5 @@ class Txn(BaseModel):
     txn_sign_keys: list[str] | None = None
     processed_timestamp:  datetime.datetime = Field(alias="@processed")
     consensusTimestamp: datetime.datetime
-    payer: str = Field(alias="record.accountID.accountNum")
+    payer: int = Field(alias="record.accountID.accountNum")
     transfer_list: list[Account] | None = None
