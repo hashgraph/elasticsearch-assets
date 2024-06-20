@@ -16,6 +16,7 @@ class Txn(BaseModel):
     processed_timestamp:  datetime.datetime = Field(alias="@processed")
     consensusTimestamp: datetime.datetime
     node_id: str = Field(alias="body.nodeAccountID.accountNum")
+    payer: str = Field(alias="record.accountID.accountNum")
 
 class TxnWithTransfer(BaseModel):
     status: str

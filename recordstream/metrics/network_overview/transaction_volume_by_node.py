@@ -16,11 +16,6 @@ class NetworkOverview(BaseScript):
         # Your HTS-specific initialization code here
         self.script_name = os.path.basename(__file__[:-3])
 
-    def rcdstreams_to_pd_df(self, records):
-        # Convert records to Pandas DataFrame
-        records_df = pd.DataFrame(records)
-        return records_df
-
     def clean_records_df(self, records_df):
         # Clean records DataFrame
         records_df.drop_duplicates(inplace=True)
