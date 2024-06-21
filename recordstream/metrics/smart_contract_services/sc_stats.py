@@ -6,7 +6,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from metrics.utils.common import BaseScript
-from model import Txn
+from smart_contract_services.model import Txn
 
 class SmartContract(BaseScript):
     def __init__(self):
@@ -40,7 +40,7 @@ class SmartContract(BaseScript):
                     'other_associated_account': []
                 }
 
-                if record['transfer_list']:
+                if record['transfer_list'] is not None:
                     base_flat_record['payer'] = [
                         transfer['accountID']['accountNum']
                         for transfer in record['transfer_list']
@@ -51,16 +51,22 @@ class SmartContract(BaseScript):
                         for transfer in record['transfer_list']
                         if transfer['amount'] > 0
                     ]
+                
+                if record['contract_call_result'] is not None:
+                    lookup_field = 'contract_call_result'
+                elif record['contract_create_result'] is not None:
+                    lookup_field = 'contract_create_result'
+                else:
+                    continue
 
-                if record['contract_call_result'] or record['contract_create_result']:
-                    base_flat_record['contract_number'] = record['contract_call_result']['contractID']['contractNum']
-                    base_flat_record['gasUsed'] = record['contract_call_result']['gasUsed']
-                    if record['contract_call_result']['logInfo']:
-                        base_flat_record['internal_contract_number'] = [
-                            record['contractID']['contractNum']
-                            for record in record['contract_call_result']['logInfo']
-                        ]
-                    base_flat_record['created_contract_id'] = record['contract_call_result']['createdContractIDs']
+                base_flat_record['contract_number'] = record[lookup_field]['contractID']['contractNum']
+                base_flat_record['gasUsed'] = record[lookup_field]['gasUsed']
+                if record[lookup_field]['logInfo'] is not None:
+                    base_flat_record['internal_contract_number'].extend([
+                        record['contractID']['contractNum']
+                        for record in record[lookup_field]['logInfo']
+                    ])
+                base_flat_record['created_contract_id'] = record[lookup_field]['createdContractIDs']
                 
                 simplified_records.append(base_flat_record)
         return simplified_records

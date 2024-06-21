@@ -46,6 +46,7 @@ class Txn(BaseModel):
     status: str
     node_id: str = Field(alias="body.nodeAccountID.accountNum")
     transaction_hash: str = Field(alias="record.transactionHash")
+    payer: int = Field(alias="record.accountID.accountNum")
     txn_type: str
     processed_timestamp:  datetime.datetime = Field(alias="@processed")
     consensusTimestamp: datetime.datetime
