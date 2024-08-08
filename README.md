@@ -1,10 +1,5 @@
 # elasticsearch-assets
 
-# Requirements
-
-# Support
-
-If you have a question on how to use the product, please see our [support guide](https://github.com/hashgraph/.github/blob/main/SUPPORT.md).
 
 # Contributing
 
