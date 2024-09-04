@@ -1,10 +1,8 @@
-import json
 import pytest
 import pandas as pd
 from unittest.mock import mock_open, patch, MagicMock
 from account_overview.active_account import Account
 from account_overview.model import Txn
-from utils.common import BaseScript
 
 sample_records = [
     {"transaction_hash": "hash1", "consensusTimestamp": pd.Timestamp("2024-01-01 00:00:00"), "payer": 1, "txn_sign_keys": ["key1"], "transfer_list": None},

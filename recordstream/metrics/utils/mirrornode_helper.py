@@ -64,6 +64,10 @@ def get_mirrornode(method: str, logger, network: str = "mainnet") -> dict:
         else:
             raise ValueError("network must be mainnet or testnet")
         response = http_get_with_retry(url, timeout=30)
+        if response is None:
+            logger.warning("Failed to retrieve a response from the MirrorNode API.")
+            return {"status": 0}
+
         return response.json()
     except (requests.exceptions.Timeout, requests.exceptions.JSONDecodeError):
         logger.warning("Failed to retrieve a response from the MirrorNode API.")
@@ -79,7 +83,7 @@ def parse_token(mirror_token_list, response):
 
     """
     for item in response:
-        item.pop("admin_key")
+        item.pop("admin_key") if "admin_key" in item.keys() else None
         mirror_token_list.append(item)
     return mirror_token_list
 
@@ -99,7 +103,7 @@ def get_mirrornode_token_list(logger, token_api_endpoint: str = "/api/v1/tokens"
             logger.info(f"Next was {token_api_endpoint}")
         except Exception as e:
             logger.warning(f"Exception: {e}. Next was {token_api_endpoint} ")
-
+            break  # Safeguard to prevent infinite loop in case of an exception
     return mirror_token_list
 
 
@@ -128,7 +132,6 @@ def get_mirrornode_token_balance(logger, token_id: str, network: str = "mainnet"
         try:
             response = get_mirrornode(token_api_endpoint, logger=logger)
             token_balances = parse_token_balance(token_balances, response)
-            import pdb; pdb.set_trace()
             token_api_endpoint = response["links"]["next"]
             logger.info(f"Next was {token_api_endpoint}")
         except Exception as e:
@@ -137,27 +140,3 @@ def get_mirrornode_token_balance(logger, token_id: str, network: str = "mainnet"
     return token_balances
 
 
-def parse_token_details(token_detail_list, response):
-    """parses the response from the mirror node, with the right fields to write to the created index
-
-    :param response: response from querying the mirror nodethe mirror node
-    """
-    if response["type"] == "FUNGIBLE_COMMON":
-        _output = {}
-        for key, new_key in ft_keys_api.items():
-            _output[new_key] = response[key]
-        _output["token_number"] = int(response["token_id"].split(".")[-1])
-        _output["token_decimals"] = int(_output["token_decimals"])
-        _output["token_initial_supply"] = int(_output["token_initial_supply"])
-        _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
-        _output["uuid"] = f"{_output['token_number']}-{_output['consensus_timestamp']}"
-        token_detail_list.append(_output)
-
-    if response["type"] == "NON_FUNGIBLE_UNIQUE":
-        _output = {}
-        for key, new_key in nft_keys_api.items():
-            _output[new_key] = response[key]
-        _output["consensus_timestamp"] = unix_to_timestamp(float(_output["consensus_timestamp"]))
-        _output["uuid"] = f"{_output['token_id']}-{_output['consensus_timestamp']}"
-        token_detail_list.append(_output)
-    return token_detail_list

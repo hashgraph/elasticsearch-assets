@@ -145,7 +145,7 @@ class BaseScript(ABC):
                         txn = Txn(**row)
                         txns.append(txn.dict())
             else:
-                raise Exception("Invalid input file format")
+                self.logger.error("Invalid input file format")
                 return None
             return txns
         except FileNotFoundError:
