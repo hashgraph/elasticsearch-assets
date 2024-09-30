@@ -4,9 +4,7 @@ This repository contains a set of tools for analyzing transaction data. The tool
 
 ## Table of Contents
 
-- [Installation](#installation)
 - [Usage](#usage)
-  - [Model](#model)
   - [Transaction Volume by Node](#transaction-volume-by-node)
   - [Transaction Volume by Services](#transaction-volume-by-services)
   - [Developer Activites](#developer-activities)
@@ -15,45 +13,7 @@ This repository contains a set of tools for analyzing transaction data. The tool
 - [Contributing](#contributing)
 - [License](#license)
 
-## Installation
-
-To use the tools in this repository, you need to have Python installed on your system. Additionally, you need to install the required packages. You can install them using poetry:
-
-```bash
-poetry install
-```
-
 ## Usage
-
-### Model
-
-The `Txn` model is defined in `model.py` and represents a transaction with various fields.
-
-```python
-from model import Txn
-import datetime
-
-# Example data
-data = {
-    "status": "completed",
-    "record.transactionHash": "0x12345abcde",
-    "@processed": "2023-06-18T12:34:56",
-    "body.nodeAccountID.accountNum": "789",
-    "txn_type": "transfer",
-    "consensusTimestamp": "2023-06-18T12:35:00"
-}
-
-# Creating an instance of Txn
-transaction = Txn(**data)
-
-# Accessing fields
-print(transaction.status)
-print(transaction.transaction_hash)
-print(transaction.txn_type)
-print(transaction.processed_timestamp)
-print(transaction.consensusTimestamp)
-print(transaction.node_id)
-```
 
 ### Transaction Volume by Node
 
@@ -310,7 +270,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
-
----
-
-If you have any additional information or specific requirements, please let me know so I can refine the README further.
