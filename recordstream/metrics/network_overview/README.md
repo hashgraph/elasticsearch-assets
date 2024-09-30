@@ -63,7 +63,7 @@ To run this script, you need to have your data in the appropriate format and pro
 #### Running the Script
 
 ```bash
-python transaction_volume_bynode.py --input_file path_to_input_file --output_folder path_to_output_folder
+python transaction_volume_by_node.py --input_file path_to_input_file --output_folder path_to_output_folder
 ```
 
 ### Example
@@ -95,9 +95,9 @@ print(f"Node ID: {transaction.node_id}")
 
 # Running the transaction volume script
 import os
-from transaction_volume_bynode import NetworkOverview
+from transaction_volume_by_node import NetworkOverview
 
-# Set up environment variables (for the sake of example, these should be set in .env file)
+# Set up environment variables (this is only setup for example, normally it should be set in .env file)
 os.environ['HEDERA_METRIC_CONFIG_PATH'] = 'config/path'
 os.environ['HEDERA_DEV_ENV'] = 'True'
 os.environ['LOG_DIR'] = 'log/directory'
@@ -112,7 +112,7 @@ network_overview.run()
 
 ## Output
 
-The output of running the `transaction_volume_bynode.py` script will be a file containing the aggregated transaction volumes by node and timestamp. The file will be saved in the specified output directory.
+The output of running the `transaction_volume_by_node.py` script will be a file containing the aggregated transaction volumes by node and timestamp. The file will be saved in the specified output directory.
 
 The output will have the following format:
 
