@@ -13,11 +13,11 @@
 /.github/                                       @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
 
 # Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
-/CODEOWNERS                                     @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+/CODEOWNERS                                     @hashgraph/release-engineering-managers
 
 # Protect the repository root files
 /README.md                                      @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
-**/LICENSE                                      @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+**/LICENSE                                      @hashgraph/release-engineering-managers
 
 # Git Ignore definitions
 **/.gitignore                                   @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
