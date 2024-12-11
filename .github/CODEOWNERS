@@ -1,0 +1,24 @@
+# Default code owners for entire repository
+*                                               @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+
+
+
+#########################
+#####  Core Files  ######
+#########################
+
+# NOTE: Must be placed last to ensure enforcement over all other rules
+
+# Protection Rules for Github Configuration Files and Actions Workflows
+/.github/                                       @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+
+# Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
+/CODEOWNERS                                     @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+
+# Protect the repository root files
+/README.md                                      @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+**/LICENSE                                      @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+
+# Git Ignore definitions
+**/.gitignore                                   @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
+**/.gitignore.*                                 @hashgraph/devops-ci @hashgraph/release-engineering-managers @hashgraph/metrika-hedera
